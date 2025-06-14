@@ -1,0 +1,263 @@
+export type LearningProgress = typeof learningProgress.$inferSelect;
+
+// Subscription and Payment Tables
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  plan: text("plan").notNull(), // 'free', 'premium', 'enterprise'
+  status: text("status").notNull(), // 'active', 'cancelled', 'expired'
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// Community and Social Features
+export const discussions = pgTable("discussions", {
+  id: serial("id").primaryKey(),
+  courseId: integer("course_id"),
+  lessonId: integer("lesson_id"),
+  userId: integer("user_id").notNull(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  type: text("type").notNull(), // 'question', 'discussion', 'showcase'
+  tags: jsonb("tags").$type<string[]>().default([]),
+  upvotes: integer("upvotes").default(0),
+  views: integer("views").default(0),
+  isResolved: boolean("is_resolved").default(false),
+  isPinned: boolean("is_pinned").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const discussionReplies = pgTable("discussion_replies", {
+  id: serial("id").primaryKey(),
+  discussionId: integer("discussion_id").notNull(),
+  userId: integer("user_id").notNull(),
+  content: text("content").notNull(),
+  parentReplyId: integer("parent_reply_id"), // for nested replies
+  upvotes: integer("upvotes").default(0),
+  isAccepted: boolean("is_accepted").default(false), // for marking best answer
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// Portfolio and Showcase
+export const portfolios = pgTable("portfolios", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  technologies: jsonb("technologies").$type<string[]>().default([]),
+  githubUrl: text("github_url"),
+  demoUrl: text("demo_url"),
+  imageUrl: text("image_url"),
+  isPublic: boolean("is_public").default(true),
+  likes: integer("likes").default(0),
+  views: integer("views").default(0),
+  featured: boolean("featured").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// Mentorship System
+export const mentorships = pgTable("mentorships", {
+  id: serial("id").primaryKey(),
+  mentorId: integer("mentor_id").notNull(),
+  menteeId: integer("mentee_id").notNull(),
+  status: text("status").notNull(), // 'pending', 'active', 'completed', 'cancelled'
+  sessionCount: integer("session_count").default(0),
+  totalHours: integer("total_hours").default(0),
+  pricePerHour: integer("price_per_hour"), // in cents
+  specialties: jsonb("specialties").$type<string[]>().default([]),
+  goals: text("goals"),
+  notes: text("notes"),
+  rating: integer("rating"), // 1-5 stars
+  review: text("review"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// Content Analytics and AI
+export const contentAnalytics = pgTable("content_analytics", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  contentType: text("content_type").notNull(), // 'video', 'article', 'course'
+  title: text("title").notNull(),
+  platform: text("platform").notNull(), // 'youtube', 'blog', 'tiktok'
+  keywords: jsonb("keywords").$type<string[]>().default([]),
+  estimatedViews: integer("estimated_views"),
+  actualViews: integer("actual_views"),
+  engagement: jsonb("engagement").$type<Record<string, any>>(),
+  aiInsights: jsonb("ai_insights").$type<Record<string, any>>(),
+  performanceScore: integer("performance_score"), // 1-100
+  optimizationSuggestions: jsonb("optimization_suggestions").$type<string[]>().default([]),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// AI Chat History
+export const aiConversations = pgTable("ai_conversations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  sessionId: text("session_id").notNull(),
+  message: text("message").notNull(),
+  response: text("response").notNull(),
+  context: jsonb("context").$type<Record<string, any>>(),
+  model: text("model").default("gpt-4o"),
+  tokens: integer("tokens"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+// Notifications System
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  type: text("type").notNull(), // 'mention', 'reply', 'achievement', 'reminder'
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  actionUrl: text("action_url"),
+  isRead: boolean("is_read").default(false),
+  priority: text("priority").default("medium"), // 'low', 'medium', 'high'
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+// Electronic Invoice System for All Industries
+export const invoices = pgTable("invoices", {
+  id: serial("id").primaryKey(),
+  invoiceNumber: text("invoice_number").notNull().unique(),
+  businessName: text("business_name").notNull(),
+  businessTaxId: text("business_tax_id").notNull(),
+  businessAddress: text("business_address"),
+  customerName: text("customer_name").notNull(),
+  customerTaxId: text("customer_tax_id"),
+  customerAddress: text("customer_address").notNull(),
+  industry: text("industry").notNull(), // technology, retail, manufacturing, etc.
+  paymentMethod: text("payment_method"), // bank_transfer, credit_card, cash, etc.
+  subtotal: text("subtotal").notNull(),
+  taxAmount: text("tax_amount").notNull(),
+  totalAmount: text("total_amount").notNull(),
+  status: text("status").default("draft").notNull(), // draft, sent, paid, overdue, cancelled
+  issueDate: timestamp("issue_date").notNull(),
+  dueDate: timestamp("due_date").notNull(),
+  paidDate: timestamp("paid_date"),
+  notes: text("notes"),
+  digitalSignature: text("digital_signature"),
+  qrCode: text("qr_code"),
+  userId: integer("user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const invoiceItems = pgTable("invoice_items", {
+  id: serial("id").primaryKey(),
+  invoiceId: integer("invoice_id").references(() => invoices.id, { onDelete: "cascade" }).notNull(),
+  description: text("description").notNull(),
+  quantity: text("quantity").notNull(),
+  unitPrice: text("unit_price").notNull(),
+  taxRate: text("tax_rate").default("10").notNull(),
+  lineTotal: text("line_total").notNull(),
+  productCode: text("product_code"),
+  unit: text("unit").default("pcs"), // pcs, kg, hours, etc.
+});
+
+export const paymentTransactions = pgTable("payment_transactions", {
+  id: serial("id").primaryKey(),
+  invoiceId: integer("invoice_id").references(() => invoices.id).notNull(),
+  transactionId: text("transaction_id").unique(),
+  paymentMethod: text("payment_method").notNull(),
+  amount: text("amount").notNull(),
+  currency: text("currency").default("VND").notNull(),
+  status: text("status").notNull(), // pending, completed, failed, refunded
+  paymentGateway: text("payment_gateway"), // stripe, paypal, vnpay, etc.
+  gatewayTransactionId: text("gateway_transaction_id"),
+  processedAt: timestamp("processed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+export const businessProfiles = pgTable("business_profiles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  businessName: text("business_name").notNull(),
+  taxId: text("tax_id").notNull(),
+  address: text("address").notNull(),
+  phone: text("phone"),
+  email: text("email"),
+  website: text("website"),
+  logo: text("logo"),
+  industry: text("industry").notNull(),
+  businessType: text("business_type"), // individual, company, corporation
+  bankAccount: text("bank_account"),
+  bankName: text("bank_name"),
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// Schema definitions for new tables
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDiscussionSchema = createInsertSchema(discussions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDiscussionReplySchema = createInsertSchema(discussionReplies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPortfolioSchema = createInsertSchema(portfolios).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMentorshipSchema = createInsertSchema(mentorships).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertContentAnalyticsSchema = createInsertSchema(contentAnalytics).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAIConversationSchema = createInsertSchema(aiConversations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Type exports for new tables
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertDiscussion = z.infer<typeof insertDiscussionSchema>;
+export type Discussion = typeof discussions.$inferSelect;
+export type InsertDiscussionReply = z.infer<typeof insertDiscussionReplySchema>;
+export type DiscussionReply = typeof discussionReplies.$inferSelect;
+export type InsertPortfolio = z.infer<typeof insertPortfolioSchema>;
+export type Portfolio = typeof portfolios.$inferSelect;
+export type InsertMentorship = z.infer<typeof insertMentorshipSchema>;
+export type Mentorship = typeof mentorships.$inferSelect;
+export type InsertContentAnalytics = z.infer<typeof insertContentAnalyticsSchema>;
+export type ContentAnalytics = typeof contentAnalytics.$inferSelect;
+export type InsertAIConversation = z.infer<typeof insertAIConversationSchema>;
+export type AIConversation = typeof aiConversations.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
